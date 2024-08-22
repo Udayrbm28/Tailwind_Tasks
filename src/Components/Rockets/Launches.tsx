@@ -1,71 +1,61 @@
 import { gql, useQuery } from "@apollo/client";
+import Navbar from "../Navbar";
 import DefaultLayout from "../../Layouts/DefaultLayout";
-import BarChart from "../Charts/BarChart";
+import LineGraph from "../Charts/LineGraph";
 import PieChart from "../Charts/PieChart";
 
-interface rocket {
-  name: string;
-  type: string;
-  active: boolean;
-  mass: {
-    kg: number;
-  };
-  height: {
-    meters: number;
-  };
-  country: string;
-  engines: {
-    type: string;
-  };
+// import { useEffect } from 'react';
+
+interface HomepageProps {
+  props: string;
 }
 
-function Rocket() {
-  const GET_ROCKETS = gql`
-    query Rockets {
-      rockets {
-        type
-        mass {
-          kg
-        }
-        height {
-          meters
-        }
-        country
-        engines {
-          type
-        }
-        name
-        active
+interface launches {
+  mission_name: string;
+  launch_date_utc: string;
+  launch_year: number;
+  upcoming: boolean | string;
+}
+
+const Homepage: React.FC<HomepageProps> = () => {
+  const GET_LAUNCHES = gql`
+    query Launches {
+      launches {
+        launch_date_utc
+        mission_name
+        upcoming
+        launch_year
       }
     }
   `;
-  const { loading, data } = useQuery(GET_ROCKETS);
+  const { loading, data } = useQuery(GET_LAUNCHES);
 
-  let hisDataMass = {} as any;
-  let hisDataHeight = {} as any;
+  let hisData = {} as any;
   let pieData = {} as any;
-  console.log("jj", data);
+
   if (data) {
     (() => {
-      hisDataMass = data.rockets.reduce((tot: any, ele: rocket) => {
-        tot[ele.name] = (ele.mass.kg);
+      hisData = data.launches.reduce((tot: any, ele: launches) => {
+        if (isNaN(tot[ele.launch_year]) && !tot[ele.launch_year])
+          tot[ele.launch_year] = 1;
+        else tot[ele.launch_year] = parseInt(tot[ele.launch_year]) + 1;
         return tot;
       }, {});
 
-      hisDataHeight = data.rockets.reduce((tot: any, ele: rocket) => {
-        tot[ele.name] = (ele.height.meters)*10000;
-        return tot;
-      }, {});
-
-      pieData = data.rockets.reduce((tot: any, ele: rocket) => {
-        const key = ele.active === false ? "IN-ACTIVE" : "ACTIVE";
+      pieData = data.launches.reduce((tot: any, ele: launches) => {
+      const key = ele.upcoming === false ? "IN-ACTIVE" : "ACTIVE";
         if (tot[key] === undefined) {
+          
           tot[key] = 1;
-        } else {
+        } else{
+       
           tot[key] = parseInt(tot[key]) + 1;
         }
         return tot;
       }, {});
+
+     
+
     })();
   }
 
@@ -77,27 +67,16 @@ function Rocket() {
         <main>
           <div className="grid  items-center justify-items-center content-center grid-cols-1 sm:grid-cols-1 lg:grid-cols-3">
             <div className="w-[360px] h-[300px]   sm:w-[500px] h-[300px] lg:col-span-2 lg:w-[600px]">
-              <BarChart
-                data={{
-                  labels: Object.keys(Object.keys(hisDataMass)),
-                  datasets: [
-                    {
-                      label: "Rocket hieght(m) ",
-                      data: Object.values(hisDataMass),
-                      backgroundColor: "black",
-                      borderColor: ["black"],
-                      borderWidth: 2,
-                    },
-                    {
-                      label: "Rocket Mass(gram)",
-                      data: Object.values(hisDataHeight),
-                      backgroundColor: "blue",
-                      borderColor: ["blue"],
-                      borderWidth: 2,
-                    },
-                  ],
-                }}
-              ></BarChart>
+              <LineGraph
+                labels={Object.keys(hisData)}
+                datasets={[
+                  {
+                    label: "Launching",
+                    data: Object.values(hisData),
+                    borderColor: "black",
+                  },
+                ]}
+              ></LineGraph>
             </div>
             <div className="w-1/2 h-80">
               <PieChart
@@ -117,7 +96,7 @@ function Rocket() {
 
           <div className="flex flex-col items-center ">
             <div>
-              <h1 className="font-bold text-5xl  mb-10">Rocket </h1>
+              <h1 className="font-bold text-5xl  mb-10">Rocket Missions</h1>
             </div>
 
             <div className=" flex border-3 border-black min-w-full max-h-80   ">
@@ -125,28 +104,34 @@ function Rocket() {
                 <thead className="sticky">
                   <tr className="">
                     <th className="text-left bg-zinc-300 p-1 sm:p-3 ">
-                      Rocket Name
+                      Mission Name
                     </th>
-                    <th className="text-left bg-zinc-300 p-1 sm:p-3">
-                      Country
-                    </th>
-                    <th className="text-left bg-zinc-300 p-1 sm:p-3">Engine</th>
+                    <th className="text-left bg-zinc-300 p-1 sm:p-3">Launched</th>
+                    <th className="text-left bg-zinc-300 p-1 sm:p-3">Year</th>
                     <th className="text-left bg-zinc-300 p-1 sm:p-3">Status</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {data.rockets.map((element: rocket) => {
+                  {data.launches.map((element: launches) => {
                     return (
                       <tr className="">
-                        <td className="p-4">{element.name}</td>
+                        <td className="p-4">{element.mission_name}</td>
 
                         <td className="p-4 italic text-gray-500">
-                          {element.country}
+                          Since{" "}
+                          {Math.round(
+                            (new Date().getTime() -
+                              new Date(
+                                data.launches[1].launch_date_utc
+                              ).getTime()) /
+                              (1000 * 3600 * 24)
+                          )}{" "}
+                          days...
                         </td>
-                        <td className="p-4  ">{element.engines.type}</td>
+                        <td className="p-4  ">{element.launch_year}</td>
                         <td className="p-4 ">
-                          {element.active ? (
+                          {element.upcoming ? (
                             <div className="text-green-700 font-extrabold">
                               ACTIVE
                             </div>
@@ -167,6 +152,6 @@ function Rocket() {
       )}
     </DefaultLayout>
   );
-}
+};
 
-export default Rocket;
+export default Homepage;

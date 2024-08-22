@@ -44,10 +44,11 @@ function Ship(props) {
         },{});
 
         pieChart = data.ships.reduce((tot: any ,ele:Ship)=>{
-            if(tot[ele.active]===undefined)
-                tot[ele.active]=1;
+          const key = ele.active?"ACTIVE":"IN-ACTIVE";
+            if(tot[key]===undefined)
+                tot[key]=1;
             else
-                tot[ele.active]=tot[ele.active]+1;
+                tot[key]=tot[key]+1;
             return tot;
         },{})
 
@@ -61,8 +62,8 @@ function Ship(props) {
         <div>Loading...</div>
       ) : (
         <main>
-          <div className="grid  items-center justify-items-center content-center grid-cols-1 sm:grid-cols-2 ">
-            <div className="w-[360px] h-[300px]   sm:w-[500px] h-[300px]">
+          <div className="grid  items-center justify-items-center content-center grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 ">
+            <div className="w-[360px] h-[300px]   sm:w-[500px] h-[300px] lg:col-span-2  lg:w-[600px]">
               <BarChart
                 data={{
                   labels: Object.keys(barChartData),
@@ -106,17 +107,17 @@ function Ship(props) {
                 <table className="table-auto min-w-full ">
                   <div></div>
                   <tr className="">
-                    <th className="text-left bg-zinc-300 p-3 tracking-wider ">
+                    <th className="text-left bg-zinc-300 p-3  ">
                       Ship Name
                     </th>
-                    <th className="text-left bg-zinc-300 p-3 tracking-wider ">
+                    <th className="text-left bg-zinc-300 p-3  ">
                       Category
                     </th>
 
-                    <th className="text-left bg-zinc-300 p-3 tracking-wider">
+                    <th className="text-left bg-zinc-300 p-3 ">
                       Year
                     </th>
-                    <th className="text-left bg-zinc-300 p-3 tracking-wider">
+                    <th className="text-left bg-zinc-300 p-3 ">
                       Status
                     </th>
                   </tr>
@@ -127,7 +128,7 @@ function Ship(props) {
                           <td className="p-4 ">{element.name}</td>
 
                           <td className="p-4 ">
-                            {element.class === null ? 7604341 : element.class}
+                            {element.class === null ? "undefined" : element.class}
                           </td>
 
                           <td className="p-4 ">
